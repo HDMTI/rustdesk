@@ -11,27 +11,18 @@ jobs:
       - name: Instalar Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Instalar LLVM (obrigatório para bindgen/magnum-opus)
+      - name: Configurar LLVM (já vem no runner)
         shell: pwsh
         run: |
-          choco install llvm --version=15.0.2 -y
-          echo "LIBCLANG_PATH=C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_ENV -Append
+          $llvmPath = (Get-Command clang).Source | Split-Path
+          echo "LIBCLANG_PATH=$llvmPath" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "LLVM encontrado em: $llvmPath"
 
       - name: Instalar opus no vcpkg do runner
         shell: pwsh
         run: |
           C:\vcpkg\vcpkg.exe install opus:x64-windows-static
           C:\vcpkg\vcpkg.exe integrate install
-
-      - name: Diagnóstico (opcional, remova depois que funcionar)
-        shell: pwsh
-        run: |
-          Write-Host "=== Pacotes vcpkg instalados ==="
-          C:\vcpkg\vcpkg.exe list
-          Write-Host "=== Headers opus ==="
-          Get-ChildItem "C:\vcpkg\installed\x64-windows-static\include\opus" -ErrorAction SilentlyContinue
-          Write-Host "=== LLVM libclang ==="
-          Get-Item "C:\Program Files\LLVM\bin\libclang.dll" -ErrorAction SilentlyContinue
 
       - name: Cache de dependências
         uses: Swatinem/rust-cache@v2
@@ -41,7 +32,6 @@ jobs:
         run: cargo build --release
         env:
           VCPKG_ROOT: C:\vcpkg
-          LIBCLANG_PATH: C:\Program Files\LLVM\bin
 
       - name: Upload do Executável
         uses: actions/upload-artifact@v4
