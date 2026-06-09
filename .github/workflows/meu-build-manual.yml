@@ -7,19 +7,30 @@ jobs:
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
+        with:
+          submodules: recursive   # ← isso estava faltando
 
       - name: Instalar Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Instalar opus via vcpkg
+      - name: Configurar LLVM (já vem no runner)
+        shell: pwsh
+        run: |
+          $llvmPath = (Get-Command clang).Source | Split-Path
+          echo "LIBCLANG_PATH=$llvmPath" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "LLVM encontrado em: $llvmPath"
+
+      - name: Instalar opus no vcpkg do runner
+        shell: pwsh
         run: |
           C:\vcpkg\vcpkg.exe install opus:x64-windows-static
-        shell: cmd
+          C:\vcpkg\vcpkg.exe integrate install
 
       - name: Cache de dependências
         uses: Swatinem/rust-cache@v2
 
       - name: Build do RustDesk
+        shell: pwsh
         run: cargo build --release
         env:
           VCPKG_ROOT: C:\vcpkg
