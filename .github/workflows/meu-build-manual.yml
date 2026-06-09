@@ -1,10 +1,26 @@
-name: Manual Build
+name: Build Windows Manual
 
 on:
   workflow_dispatch:
 
 jobs:
-  build:
-    uses: ./.github/workflows/flutter-build.yml
-    with:
-      upload-artifact: true
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Instalar Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache de dependências
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build do RustDesk
+        run: cargo build --release
+
+      - name: Upload do Executável
+        uses: actions/upload-artifact@v4
+        with:
+          name: rustdesk-windows-exe
+          path: target/release/rustdesk.exe
