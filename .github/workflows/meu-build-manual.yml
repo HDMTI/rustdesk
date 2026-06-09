@@ -1,8 +1,6 @@
 name: Build Windows Manual
-
 on:
   workflow_dispatch:
-
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -13,11 +11,18 @@ jobs:
       - name: Instalar Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Instalar opus via vcpkg
+        run: |
+          C:\vcpkg\vcpkg.exe install opus:x64-windows-static
+        shell: cmd
+
       - name: Cache de dependências
         uses: Swatinem/rust-cache@v2
 
       - name: Build do RustDesk
         run: cargo build --release
+        env:
+          VCPKG_ROOT: C:\vcpkg
 
       - name: Upload do Executável
         uses: actions/upload-artifact@v4
