@@ -9,22 +9,28 @@ jobs:
         shell: pwsh
         run: |
           git clone --recurse-submodules https://github.com/rustdesk/rustdesk.git .
-          git submodule update --init --recursive
 
       - name: Instalar Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Configurar LLVM (já vem no runner)
+      - name: Configurar LLVM
         shell: pwsh
         run: |
           $llvmPath = (Get-Command clang).Source | Split-Path
           echo "LIBCLANG_PATH=$llvmPath" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      - name: Instalar opus no vcpkg do runner
+      - name: Instalar vcpkg limpo + opus
         shell: pwsh
         run: |
-          C:\vcpkg\vcpkg.exe install opus:x64-windows-static
-          C:\vcpkg\vcpkg.exe integrate install
+          git clone https://github.com/microsoft/vcpkg D:\vcpkg
+          D:\vcpkg\bootstrap-vcpkg.bat -disableMetrics
+          D:\vcpkg\vcpkg.exe install opus:x64-windows-static libvpx:x64-windows-static libyuv:x64-windows-static aom:x64-windows-static
+          echo "VCPKG_ROOT=D:\vcpkg" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Verificar opus instalado
+        shell: pwsh
+        run: |
+          Test-Path "D:\vcpkg\installed\x64-windows-static\include\opus\opus_multistream.h"
 
       - name: Cache de dependências
         uses: Swatinem/rust-cache@v2
@@ -33,7 +39,7 @@ jobs:
         shell: pwsh
         run: cargo build --release
         env:
-          VCPKG_ROOT: C:\vcpkg
+          VCPKG_ROOT: D:\vcpkg
 
       - name: Upload do Executável
         uses: actions/upload-artifact@v4
