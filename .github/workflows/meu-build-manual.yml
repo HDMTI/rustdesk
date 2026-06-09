@@ -9,15 +9,21 @@ jobs:
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
+        with:
+          submodules: recursive # ISSO É O MAIS IMPORTANTE
 
       - name: Instalar Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Cache de dependências
-        uses: Swatinem/rust-cache@v2
-
+      - name: Instalar dependências do Windows
+        run: |
+          vcpkg integrate install
+          
       - name: Build do RustDesk
-        run: cargo build --release --features inline
+        run: |
+          cargo build --release --features inline
+        env:
+          VCPKG_ROOT: ${{ env.VCPKG_INSTALLATION_ROOT }}
 
       - name: Upload do Executável
         uses: actions/upload-artifact@v4
