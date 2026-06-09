@@ -6,8 +6,6 @@ on:
 jobs:
   build-windows:
     runs-on: windows-latest
-    env:
-      VCPKG_ROOT: C:\vcpkg
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
@@ -16,18 +14,14 @@ jobs:
 
       - name: Instalar Rust
         uses: dtolnay/rust-toolchain@stable
-
-      - name: Instalar dependências (vcpkg)
-        run: |
-          vcpkg install opus:x64-windows-static libvpx:x64-windows-static libyuv:x64-windows-static
+        with:
+          toolchain: stable
 
       - name: Build do RustDesk
         run: |
-          cargo build --release --features inline
-        env:
-          VCPKG_ROOT: C:\vcpkg
-          CMAKE_TOOLCHAIN_FILE: C:\vcpkg\scripts\buildsystems\vcpkg.cmake
-
+          cargo build --release
+        # Removemos o --features inline e o vcpkg para evitar conflitos de ambiente
+        
       - name: Upload do Executável
         uses: actions/upload-artifact@v4
         with:
