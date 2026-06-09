@@ -6,24 +6,27 @@ on:
 jobs:
   build-windows:
     runs-on: windows-latest
+    env:
+      VCPKG_ROOT: C:\vcpkg
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
         with:
-          submodules: recursive # ISSO É O MAIS IMPORTANTE
+          submodules: recursive
 
       - name: Instalar Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Instalar dependências do Windows
+      - name: Instalar dependências (vcpkg)
         run: |
-          vcpkg integrate install
-          
+          vcpkg install opus:x64-windows-static libvpx:x64-windows-static libyuv:x64-windows-static
+
       - name: Build do RustDesk
         run: |
           cargo build --release --features inline
         env:
-          VCPKG_ROOT: ${{ env.VCPKG_INSTALLATION_ROOT }}
+          VCPKG_ROOT: C:\vcpkg
+          CMAKE_TOOLCHAIN_FILE: C:\vcpkg\scripts\buildsystems\vcpkg.cmake
 
       - name: Upload do Executável
         uses: actions/upload-artifact@v4
