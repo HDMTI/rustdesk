@@ -1,36 +1,47 @@
 name: Build Windows Manual
-
 on:
   workflow_dispatch:
-
 jobs:
   build-windows:
     runs-on: windows-latest
-    env:
-      VCPKG_ROOT: C:\vcpkg
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Instalar Rust
         uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: stable
 
-      - name: Configurar ambiente vcpkg
+      - name: Instalar LLVM (obrigatório para bindgen/magnum-opus)
+        shell: pwsh
         run: |
-          $env:VCPKG_ROOT = "C:\vcpkg"
-          echo "VCPKG_ROOT=C:\vcpkg" >> $env:GITHUB_ENV
-          echo "CMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake" >> $env:GITHUB_ENV
+          choco install llvm --version=15.0.2 -y
+          echo "LIBCLANG_PATH=C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Instalar opus no vcpkg do runner
+        shell: pwsh
+        run: |
+          C:\vcpkg\vcpkg.exe install opus:x64-windows-static
+          C:\vcpkg\vcpkg.exe integrate install
+
+      - name: Diagnóstico (opcional, remova depois que funcionar)
+        shell: pwsh
+        run: |
+          Write-Host "=== Pacotes vcpkg instalados ==="
+          C:\vcpkg\vcpkg.exe list
+          Write-Host "=== Headers opus ==="
+          Get-ChildItem "C:\vcpkg\installed\x64-windows-static\include\opus" -ErrorAction SilentlyContinue
+          Write-Host "=== LLVM libclang ==="
+          Get-Item "C:\Program Files\LLVM\bin\libclang.dll" -ErrorAction SilentlyContinue
+
+      - name: Cache de dependências
+        uses: Swatinem/rust-cache@v2
 
       - name: Build do RustDesk
-        run: |
-          cargo build --release --features inline
+        shell: pwsh
+        run: cargo build --release
         env:
           VCPKG_ROOT: C:\vcpkg
-          CMAKE_TOOLCHAIN_FILE: C:\vcpkg\scripts\buildsystems\vcpkg.cmake
+          LIBCLANG_PATH: C:\Program Files\LLVM\bin
 
       - name: Upload do Executável
         uses: actions/upload-artifact@v4
