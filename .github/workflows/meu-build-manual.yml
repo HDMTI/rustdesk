@@ -6,6 +6,8 @@ on:
 jobs:
   build-windows:
     runs-on: windows-latest
+    env:
+      VCPKG_ROOT: C:\vcpkg
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
@@ -17,11 +19,19 @@ jobs:
         with:
           toolchain: stable
 
+      - name: Configurar ambiente vcpkg
+        run: |
+          $env:VCPKG_ROOT = "C:\vcpkg"
+          echo "VCPKG_ROOT=C:\vcpkg" >> $env:GITHUB_ENV
+          echo "CMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake" >> $env:GITHUB_ENV
+
       - name: Build do RustDesk
         run: |
-          cargo build --release
-        # Removemos o --features inline e o vcpkg para evitar conflitos de ambiente
-        
+          cargo build --release --features inline
+        env:
+          VCPKG_ROOT: C:\vcpkg
+          CMAKE_TOOLCHAIN_FILE: C:\vcpkg\scripts\buildsystems\vcpkg.cmake
+
       - name: Upload do Executável
         uses: actions/upload-artifact@v4
         with:
