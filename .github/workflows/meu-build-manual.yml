@@ -24,13 +24,19 @@ jobs:
         run: |
           git clone https://github.com/microsoft/vcpkg D:\vcpkg
           D:\vcpkg\bootstrap-vcpkg.bat -disableMetrics
-          D:\vcpkg\vcpkg.exe install opus:x64-windows-static libvpx:x64-windows-static libyuv:x64-windows-static aom:x64-windows-static
+          D:\vcpkg\vcpkg.exe install opus:x64-windows-static libvpx:x64-windows-static libyuv:x64-windows-static aom:x64-windows-static --classic
           echo "VCPKG_ROOT=D:\vcpkg" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Verificar opus instalado
         shell: pwsh
         run: |
-          Test-Path "D:\vcpkg\installed\x64-windows-static\include\opus\opus_multistream.h"
+          $header = "D:\vcpkg\installed\x64-windows-static\include\opus\opus_multistream.h"
+          if (Test-Path $header) {
+            Write-Host "OK - opus headers encontrados"
+          } else {
+            Write-Error "FALHOU - opus_multistream.h não encontrado"
+            exit 1
+          }
 
       - name: Cache de dependências
         uses: Swatinem/rust-cache@v2
