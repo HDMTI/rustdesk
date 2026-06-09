@@ -5,8 +5,11 @@ jobs:
   build-windows:
     runs-on: windows-latest
     steps:
-      - name: Checkout código
-        uses: actions/checkout@v4
+      - name: Clonar RustDesk com submodules
+        shell: pwsh
+        run: |
+          git clone --recurse-submodules https://github.com/rustdesk/rustdesk.git .
+          git submodule update --init --recursive
 
       - name: Instalar Rust
         uses: dtolnay/rust-toolchain@stable
@@ -16,7 +19,6 @@ jobs:
         run: |
           $llvmPath = (Get-Command clang).Source | Split-Path
           echo "LIBCLANG_PATH=$llvmPath" | Out-File -FilePath $env:GITHUB_ENV -Append
-          Write-Host "LLVM encontrado em: $llvmPath"
 
       - name: Instalar opus no vcpkg do runner
         shell: pwsh
